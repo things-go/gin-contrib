@@ -6,7 +6,7 @@ require (
 	github.com/casbin/casbin/v2 v2.66.3
 	github.com/gin-gonic/gin v1.9.0
 	go.uber.org/zap v1.24.0
-	gorm.io/gorm v1.24.6
+	gorm.io/gorm v1.25.0
 )
 
 require (
