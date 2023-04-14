@@ -3,7 +3,7 @@ module github.com/things-go/gin-contrib
 go 1.19
 
 require (
-	github.com/casbin/casbin/v2 v2.66.3
+	github.com/casbin/casbin/v2 v2.67.0
 	github.com/gin-gonic/gin v1.9.0
 	go.uber.org/zap v1.24.0
 	gorm.io/gorm v1.25.0
