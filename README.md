@@ -8,7 +8,7 @@ gin contrib is middleware utilities for [Gin](https://github.com/gin-gonic/gin)
 ![Action Status](https://github.com/things-go/gin-contrib/workflows/Go/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/things-go/gin-contrib)](https://goreportcard.com/report/github.com/things-go/gin-contrib)
 [![Licence](https://img.shields.io/github/license/things-go/gin-contrib)](https://raw.githubusercontent.com/things-go/gin-contrib/master/LICENSE)
-[![Tag](https://img.shields.io/github/v/tag/things-go/gin-contrib)](https://github.com/thinkgos/gin-contrib/tags)
+[![Tag](https://img.shields.io/github/v/tag/things-go/gin-contrib)](https://github.com/things-go/gin-contrib/tags)
 
 ## Usage
 
@@ -20,7 +20,7 @@ Use go get.
     go get github.com/things-go/gin-contrib
 ```
 
-Then import the gazp package into your own code.
+Then import the package into your own code.
 
 ```go
     import "github.com/things-go/gin-contrib"
