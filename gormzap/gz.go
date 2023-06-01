@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"gorm.io/gorm/utils"
 )
 
 // Logger logger for gorm2
@@ -17,6 +16,7 @@ type Logger struct {
 	log *zap.Logger
 	logger.Config
 	customFields []func(ctx context.Context) zap.Field
+	skipPackages []string
 }
 
 // Option logger/recover option
@@ -33,6 +33,13 @@ func WithCustomFields(fields ...func(ctx context.Context) zap.Field) Option {
 func WithConfig(cfg logger.Config) Option {
 	return func(l *Logger) {
 		l.Config = cfg
+	}
+}
+
+// WithSkipPackages optional custom logger.Config
+func WithSkipPackages(skipPackages ...string) Option {
+	return func(l *Logger) {
+		l.skipPackages = skipPackages
 	}
 }
 
@@ -68,21 +75,21 @@ func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 // Info print info
 func (l Logger) Info(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel >= logger.Info {
-		l.log.Sugar().Debugf(msg, append([]interface{}{utils.FileWithLineNum()}, args...)...)
+		l.log.Sugar().Debugf(msg, append([]interface{}{FileWithLineNum()}, args...)...)
 	}
 }
 
 // Warn print warn messages
 func (l Logger) Warn(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel >= logger.Warn {
-		l.log.Sugar().Warnf(msg, append([]interface{}{utils.FileWithLineNum()}, args...)...)
+		l.log.Sugar().Warnf(msg, append([]interface{}{FileWithLineNum()}, args...)...)
 	}
 }
 
 // Error print error messages
 func (l Logger) Error(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel >= logger.Error {
-		l.log.Sugar().Errorf(msg, append([]interface{}{utils.FileWithLineNum()}, args...)...)
+		l.log.Sugar().Errorf(msg, append([]interface{}{FileWithLineNum()}, args...)...)
 	}
 }
 
@@ -100,7 +107,7 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		}
 		fields = append(fields,
 			zap.Error(err),
-			zap.String("file", utils.FileWithLineNum()),
+			zap.String("file", FileWithLineNum()),
 			zap.Duration("latency", elapsed),
 		)
 
@@ -118,7 +125,7 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		}
 		fields = append(fields,
 			zap.Error(err),
-			zap.String("file", utils.FileWithLineNum()),
+			zap.String("file", FileWithLineNum()),
 			zap.String("slow!!!", fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)),
 			zap.Duration("latency", elapsed),
 		)
@@ -137,7 +144,7 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		}
 		fields = append(fields,
 			zap.Error(err),
-			zap.String("file", utils.FileWithLineNum()),
+			zap.String("file", FileWithLineNum()),
 			zap.Duration("latency", elapsed),
 		)
 
