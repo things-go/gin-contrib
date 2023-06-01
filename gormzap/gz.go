@@ -75,21 +75,21 @@ func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 // Info print info
 func (l Logger) Info(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel >= logger.Info {
-		l.log.Sugar().Debugf(msg, append([]interface{}{FileWithLineNum()}, args...)...)
+		l.log.Sugar().Debugf(msg, append([]interface{}{FileWithLineNum(l.skipPackages...)}, args...)...)
 	}
 }
 
 // Warn print warn messages
 func (l Logger) Warn(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel >= logger.Warn {
-		l.log.Sugar().Warnf(msg, append([]interface{}{FileWithLineNum()}, args...)...)
+		l.log.Sugar().Warnf(msg, append([]interface{}{FileWithLineNum(l.skipPackages...)}, args...)...)
 	}
 }
 
 // Error print error messages
 func (l Logger) Error(ctx context.Context, msg string, args ...interface{}) {
 	if l.LogLevel >= logger.Error {
-		l.log.Sugar().Errorf(msg, append([]interface{}{FileWithLineNum()}, args...)...)
+		l.log.Sugar().Errorf(msg, append([]interface{}{FileWithLineNum(l.skipPackages...)}, args...)...)
 	}
 }
 
@@ -107,7 +107,7 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		}
 		fields = append(fields,
 			zap.Error(err),
-			zap.String("file", FileWithLineNum()),
+			zap.String("file", FileWithLineNum(l.skipPackages...)),
 			zap.Duration("latency", elapsed),
 		)
 
@@ -125,7 +125,7 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		}
 		fields = append(fields,
 			zap.Error(err),
-			zap.String("file", FileWithLineNum()),
+			zap.String("file", FileWithLineNum(l.skipPackages...)),
 			zap.String("slow!!!", fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)),
 			zap.Duration("latency", elapsed),
 		)
@@ -144,7 +144,7 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		}
 		fields = append(fields,
 			zap.Error(err),
-			zap.String("file", FileWithLineNum()),
+			zap.String("file", FileWithLineNum(l.skipPackages...)),
 			zap.Duration("latency", elapsed),
 		)
 
