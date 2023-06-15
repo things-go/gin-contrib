@@ -12,7 +12,7 @@ import (
 type Authenticator struct {
 	Parser             *httpsign.Parser
 	SkipAuthentication func(c *gin.Context) bool
-	ErrFallback        func(*gin.Context, httpsign.Scheme, error)
+	ErrFallback        func(c *gin.Context, statusCode int, err error)
 }
 
 // Authenticated returns a gin middleware which permits given permissions in parameter.
@@ -24,24 +24,29 @@ func (a *Authenticator) Authenticated() gin.HandlerFunc {
 		a.SkipAuthentication = func(c *gin.Context) bool { return false }
 	}
 	if a.ErrFallback == nil {
-		a.ErrFallback = func(c *gin.Context, scheme httpsign.Scheme, err error) {
-			statsCode := http.StatusBadRequest
-			if scheme != httpsign.SchemeUnspecified &&
-				errors.Is(err, httpsign.ErrSignatureInvalid) {
-				if scheme == httpsign.SchemeSignature {
-					statsCode = http.StatusForbidden
-				} else {
-					statsCode = http.StatusUnauthorized
-				}
-			}
-			c.String(statsCode, err.Error())
+		a.ErrFallback = func(c *gin.Context, statusCode int, err error) {
+			c.String(statusCode, err.Error())
 		}
 	}
 	return func(c *gin.Context) {
 		if !a.SkipAuthentication(c) {
-			scheme, err := a.Parser.Parse(c.Request)
+			parameter, err := a.Parser.ParseFromRequest(c.Request)
 			if err != nil {
-				a.ErrFallback(c, scheme, err)
+				a.ErrFallback(c, http.StatusBadRequest, err)
+				return
+			}
+			err = a.Parser.Verify(c.Request, parameter)
+			if err != nil {
+				statusCode := http.StatusBadRequest
+				if parameter.Scheme != httpsign.SchemeUnspecified &&
+					errors.Is(err, httpsign.ErrSignatureInvalid) {
+					if parameter.Scheme == httpsign.SchemeSignature {
+						statusCode = http.StatusForbidden
+					} else {
+						statusCode = http.StatusUnauthorized
+					}
+				}
+				a.ErrFallback(c, statusCode, err)
 				return
 			}
 		}

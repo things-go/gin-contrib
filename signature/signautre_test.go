@@ -26,16 +26,6 @@ var (
 	submitHeader           = []string{"(request-target)", "date", "digest"}
 )
 
-// mock interface always return true
-type dateAlwaysValid struct{}
-
-func (v *dateAlwaysValid) Validate(r *http.Request, _ *httpsign.Parameter) error { return nil }
-
-// mock interface always return true
-type timestampAlwaysValid struct{}
-
-func (v *timestampAlwaysValid) ValidateTimestamp(t int64) error { return nil }
-
 func runTest(
 	signingMethod httpsign.SigningMethod,
 	headers []string,
@@ -46,7 +36,6 @@ func runTest(
 	parser := httpsign.NewParser(
 		httpsign.WithMinimumRequiredHeaders(headers),
 		httpsign.WithValidators(v...),
-		httpsign.WithValidatorCreated(&timestampAlwaysValid{}),
 	)
 	parser.RegisterSigningMethod(
 		signingMethod.Alg(),
@@ -128,7 +117,7 @@ func TestAuthenticate_SchemeAuthentication_InvalidSignature(t *testing.T) {
 	c := runTest(
 		httpsign.SigningMethodHmacSha512,
 		minimumRequiredHeaders,
-		[]httpsign.Validator{&dateAlwaysValid{}},
+		[]httpsign.Validator{},
 		req,
 	)
 	assert.Equal(t, http.StatusUnauthorized, c.Writer.Status())
@@ -156,7 +145,7 @@ func TestAuthenticate_SchemeSignature_InvalidSignature(t *testing.T) {
 	c := runTest(
 		httpsign.SigningMethodHmacSha512,
 		minimumRequiredHeaders,
-		[]httpsign.Validator{&dateAlwaysValid{}},
+		[]httpsign.Validator{},
 		req,
 	)
 	assert.Equal(t, http.StatusForbidden, c.Writer.Status())
@@ -184,7 +173,7 @@ func TestAuthenticate_Success(t *testing.T) {
 	c := runTest(
 		httpsign.SigningMethodHmacSha512,
 		minimumRequiredHeaders,
-		[]httpsign.Validator{&dateAlwaysValid{}},
+		[]httpsign.Validator{},
 		req,
 	)
 	assert.Equal(t, http.StatusOK, c.Writer.Status())
