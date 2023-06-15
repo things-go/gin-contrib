@@ -26,6 +26,7 @@ func (a *Authenticator) Authenticated() gin.HandlerFunc {
 	if a.ErrFallback == nil {
 		a.ErrFallback = func(c *gin.Context, statusCode int, err error) {
 			c.String(statusCode, err.Error())
+			c.Abort()
 		}
 	}
 	return func(c *gin.Context) {
