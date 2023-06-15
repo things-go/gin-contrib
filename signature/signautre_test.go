@@ -183,9 +183,9 @@ func mockMergerHeader(p *httpsign.Parameter, r *http.Request) {
 	p.Algorithm = p.Method.Alg()
 
 	b := strings.Builder{}
-	hd := httpsign.SignatureHeader
+	hd := httpsign.HeaderSignature
 	if p.Scheme == httpsign.SchemeAuthentication {
-		hd = httpsign.AuthorizationHeader
+		hd = httpsign.HeaderAuthorization
 		b.WriteString("Signature ")
 	}
 	b.WriteString(fmt.Sprintf(`keyId="%s",`, p.KeyId))
