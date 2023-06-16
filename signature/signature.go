@@ -32,7 +32,6 @@ func MustFromKeyId(ctx context.Context) httpsign.KeyId {
 type Authenticator struct {
 	Parser      *httpsign.Parser
 	ErrFallback func(c *gin.Context, statusCode int, err error)
-	Hook        func(c *gin.Context, p *httpsign.Parameter)
 }
 
 // Authenticated returns a gin middleware which permits given permissions in parameter.
@@ -65,9 +64,6 @@ func (a *Authenticator) Authenticated() gin.HandlerFunc {
 			}
 			a.ErrFallback(c, statusCode, err)
 			return
-		}
-		if a.Hook != nil {
-			a.Hook(c, parameter)
 		}
 		c.Request = c.Request.WithContext(WithKeyId(c.Request.Context(), parameter.KeyId))
 		c.Next()
