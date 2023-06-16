@@ -6,7 +6,7 @@ require (
 	github.com/casbin/casbin/v2 v2.71.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/stretchr/testify v1.8.4
-	github.com/things-go/http-signature-go v0.0.2-rc1
+	github.com/things-go/http-signature-go v0.1.0
 	github.com/things-go/limiter v0.1.2
 	go.uber.org/zap v1.24.0
 	gorm.io/gorm v1.25.1
