@@ -13,6 +13,7 @@ type Authenticator struct {
 	Parser             *httpsign.Parser
 	SkipAuthentication func(c *gin.Context) bool
 	ErrFallback        func(c *gin.Context, statusCode int, err error)
+	Hook               func(c *gin.Context)
 }
 
 // Authenticated returns a gin middleware which permits given permissions in parameter.
@@ -50,6 +51,9 @@ func (a *Authenticator) Authenticated() gin.HandlerFunc {
 				a.ErrFallback(c, statusCode, err)
 				return
 			}
+		}
+		if a.Hook != nil {
+			a.Hook(c)
 		}
 		c.Next()
 	}
