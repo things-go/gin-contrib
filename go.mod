@@ -3,7 +3,7 @@ module github.com/things-go/gin-contrib
 go 1.20
 
 require (
-	github.com/casbin/casbin/v2 v2.75.2
+	github.com/casbin/casbin/v2 v2.77.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/stretchr/testify v1.8.4
 	github.com/things-go/http-signature-go v0.1.0
