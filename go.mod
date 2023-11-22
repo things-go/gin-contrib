@@ -3,7 +3,7 @@ module github.com/things-go/gin-contrib
 go 1.20
 
 require (
-	github.com/casbin/casbin/v2 v2.77.2
+	github.com/casbin/casbin/v2 v2.78.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/stretchr/testify v1.8.4
 	github.com/things-go/http-signature-go v0.1.0
@@ -13,8 +13,8 @@ require (
 )
 
 require (
-	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
+	github.com/casbin/govaluate v1.1.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
