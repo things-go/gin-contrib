@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	httpsign "github.com/things-go/http-signature-go"
+	httpsign "github.com/thinkgos/http-signature-go"
 )
 
 const (

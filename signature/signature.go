@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	httpsign "github.com/things-go/http-signature-go"
+	httpsign "github.com/thinkgos/http-signature-go"
 )
 
 type ctxKeyIdKey struct{}

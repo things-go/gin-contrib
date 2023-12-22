@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/things-go/gin-contrib/signature"
-	httpsign "github.com/things-go/http-signature-go"
+	httpsign "github.com/thinkgos/http-signature-go"
 )
 
 func main() {
