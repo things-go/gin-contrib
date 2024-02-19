@@ -80,8 +80,8 @@ github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcU
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/things-go/limiter v0.1.2 h1:N3MDuMFKi44ihjoPsfKKggaGNOLDkHjd8K7GIt/pLOY=
 github.com/things-go/limiter v0.1.2/go.mod h1:vgoqVmN5gsptAZG/EcuRoKOhnoak046yMRuIfOdHj+M=
-github.com/thinkgos/http-signature-go v0.2.0 h1:oXKwUGS74U4L/wS7rGzp5NllnQkoaNMNyPeYXZTtsqo=
-github.com/thinkgos/http-signature-go v0.2.0/go.mod h1:1e+U6sePycPWRggpCWv5FNNzrLSlUuchDLScidMxZeY=
+github.com/thinkgos/http-signature-go v0.2.1 h1:IDHvtUhxy/SudW7d7GluNEWftl3wEyJKhNKjGtm2z/E=
+github.com/thinkgos/http-signature-go v0.2.1/go.mod h1:1e+U6sePycPWRggpCWv5FNNzrLSlUuchDLScidMxZeY=
 github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.2.11 h1:BMaWp1Bb6fHwEtbplGBGJ498wD+LKlNSl25MjdZY4dU=
