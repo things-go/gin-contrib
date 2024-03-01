@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/casbin/casbin/v2 v2.82.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/things-go/limiter v0.1.2
 	github.com/thinkgos/http-signature-go v0.2.1
 	go.uber.org/zap v1.27.0
