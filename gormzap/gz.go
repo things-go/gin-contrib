@@ -15,8 +15,9 @@ import (
 type Logger struct {
 	log *zap.Logger
 	logger.Config
-	customFields []func(ctx context.Context) zap.Field
-	skipPackages []string
+	customFields     []func(ctx context.Context) zap.Field
+	skipPackages     []string
+	fileLineLogLevel logger.LogLevel
 }
 
 // Option logger/recover option
@@ -43,6 +44,14 @@ func WithSkipPackages(skipPackages ...string) Option {
 	}
 }
 
+// WithFileLineLogLevel optional custom file line log level
+// default: logger.Info
+func WithFileLineLogLevel(lvl logger.LogLevel) Option {
+	return func(l *Logger) {
+		l.fileLineLogLevel = lvl
+	}
+}
+
 // SetGormDBLogger set db logger
 func SetGormDBLogger(db *gorm.DB, l logger.Interface) {
 	db.Logger = l
@@ -58,6 +67,7 @@ func New(zapLogger *zap.Logger, opts ...Option) logger.Interface {
 			IgnoreRecordNotFoundError: false,
 			LogLevel:                  logger.Warn,
 		},
+		fileLineLogLevel: logger.Info,
 	}
 	for _, opt := range opts {
 		opt(l)
@@ -73,28 +83,40 @@ func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 }
 
 // Info print info
-func (l Logger) Info(ctx context.Context, msg string, args ...interface{}) {
+func (l *Logger) Info(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Info {
-		l.log.Sugar().Debugf(msg, append([]interface{}{FileWithLineNum(l.skipPackages...)}, args...)...)
+		if l.fileLineLogLevel >= logger.Error {
+			l.log.Sugar().Debugf(msg, append([]any{FileWithLineNum(l.skipPackages...)}, args...)...)
+		} else {
+			l.log.Sugar().Debugf(msg, args...)
+		}
 	}
 }
 
 // Warn print warn messages
-func (l Logger) Warn(ctx context.Context, msg string, args ...interface{}) {
+func (l *Logger) Warn(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Warn {
-		l.log.Sugar().Warnf(msg, append([]interface{}{FileWithLineNum(l.skipPackages...)}, args...)...)
+		if l.fileLineLogLevel >= logger.Warn {
+			l.log.Sugar().Warnf(msg, append([]any{FileWithLineNum(l.skipPackages...)}, args...)...)
+		} else {
+			l.log.Sugar().Warnf(msg, args...)
+		}
 	}
 }
 
 // Error print error messages
-func (l Logger) Error(ctx context.Context, msg string, args ...interface{}) {
+func (l *Logger) Error(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Error {
-		l.log.Sugar().Errorf(msg, append([]interface{}{FileWithLineNum(l.skipPackages...)}, args...)...)
+		if l.fileLineLogLevel >= logger.Error {
+			l.log.Sugar().Errorf(msg, append([]any{FileWithLineNum(l.skipPackages...)}, args...)...)
+		} else {
+			l.log.Sugar().Errorf(msg, args...)
+		}
 	}
 }
 
 // Trace print sql message
-func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.LogLevel <= logger.Silent {
 		return
 	}
@@ -123,9 +145,11 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		for _, customField := range l.customFields {
 			fields = append(fields, customField(ctx))
 		}
+		fields = append(fields, zap.Error(err))
+		if l.fileLineLogLevel >= logger.Warn {
+			fields = append(fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+		}
 		fields = append(fields,
-			zap.Error(err),
-			zap.String("file", FileWithLineNum(l.skipPackages...)),
 			zap.String("slow!!!", fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)),
 			zap.Duration("latency", elapsed),
 		)
@@ -142,12 +166,11 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 		for _, customField := range l.customFields {
 			fields = append(fields, customField(ctx))
 		}
-		fields = append(fields,
-			zap.Error(err),
-			zap.String("file", FileWithLineNum(l.skipPackages...)),
-			zap.Duration("latency", elapsed),
-		)
-
+		fields = append(fields, zap.Error(err))
+		if l.fileLineLogLevel >= logger.Info {
+			fields = append(fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+		}
+		fields = append(fields, zap.Duration("latency", elapsed))
 		sql, rows := fc()
 		if rows == -1 {
 			fields = append(fields, zap.String("rows", "-"))
@@ -161,12 +184,12 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 
 // Immutable custom immutable field
 // Deprecated: use Any instead
-func Immutable(key string, value interface{}) func(ctx context.Context) zap.Field {
+func Immutable(key string, value any) func(ctx context.Context) zap.Field {
 	return Any(key, value)
 }
 
 // Any custom immutable any field
-func Any(key string, value interface{}) func(ctx context.Context) zap.Field {
+func Any(key string, value any) func(ctx context.Context) zap.Field {
 	field := zap.Any(key, value)
 	return func(ctx context.Context) zap.Field { return field }
 }

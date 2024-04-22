@@ -20,7 +20,6 @@ func FileWithLineNum(skipPackages ...string) string {
 			return file + ":" + strconv.FormatInt(int64(line), 10)
 		}
 	}
-
 	return ""
 }
 

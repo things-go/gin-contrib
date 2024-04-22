@@ -344,7 +344,7 @@ func (w *bodyWriter) WriteString(s string) (int, error) {
 }
 
 // Any custom immutable any field
-func Any(key string, value interface{}) func(c *gin.Context) zap.Field {
+func Any(key string, value any) func(c *gin.Context) zap.Field {
 	field := zap.Any(key, value)
 	return func(c *gin.Context) zap.Field { return field }
 }
