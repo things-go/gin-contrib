@@ -84,101 +84,140 @@ func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 
 // Info print info
 func (l *Logger) Info(ctx context.Context, msg string, args ...any) {
-	if l.LogLevel >= logger.Info {
-		if l.fileLineLogLevel >= logger.Error {
-			l.log.Sugar().Debugf(msg, append([]any{FileWithLineNum(l.skipPackages...)}, args...)...)
+	if l.LogLevel >= logger.Info && l.log.Level().Enabled(zap.InfoLevel) {
+		msg = fmt.Sprintf(msg, args...)
+		if len(l.customFields) > 0 || l.fileLineLogLevel >= logger.Info {
+			fc := poolGet()
+			defer poolPut(fc)
+			for _, customField := range l.customFields {
+				fc.Fields = append(fc.Fields, customField(ctx))
+			}
+			if l.fileLineLogLevel >= logger.Info {
+				fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			}
+			l.log.Debug(msg, fc.Fields...)
 		} else {
-			l.log.Sugar().Debugf(msg, args...)
+			l.log.Debug(msg)
 		}
 	}
 }
 
 // Warn print warn messages
 func (l *Logger) Warn(ctx context.Context, msg string, args ...any) {
-	if l.LogLevel >= logger.Warn {
-		if l.fileLineLogLevel >= logger.Warn {
-			l.log.Sugar().Warnf(msg, append([]any{FileWithLineNum(l.skipPackages...)}, args...)...)
+	if l.LogLevel >= logger.Warn && l.log.Level().Enabled(zap.WarnLevel) {
+		msg = fmt.Sprintf(msg, args...)
+		if len(l.customFields) > 0 || l.fileLineLogLevel >= logger.Warn {
+			fc := poolGet()
+			defer poolPut(fc)
+			for _, customField := range l.customFields {
+				fc.Fields = append(fc.Fields, customField(ctx))
+			}
+			if l.fileLineLogLevel >= logger.Warn {
+				fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			}
+			l.log.Warn(msg, fc.Fields...)
 		} else {
-			l.log.Sugar().Warnf(msg, args...)
+			l.log.Warn(msg)
 		}
 	}
 }
 
 // Error print error messages
 func (l *Logger) Error(ctx context.Context, msg string, args ...any) {
-	if l.LogLevel >= logger.Error {
-		if l.fileLineLogLevel >= logger.Error {
-			l.log.Sugar().Errorf(msg, append([]any{FileWithLineNum(l.skipPackages...)}, args...)...)
+	if l.LogLevel >= logger.Error && l.log.Level().Enabled(zap.ErrorLevel) {
+		msg = fmt.Sprintf(msg, args...)
+		if len(l.customFields) > 0 || l.fileLineLogLevel >= logger.Error {
+			fc := poolGet()
+			defer poolPut(fc)
+			for _, customField := range l.customFields {
+				fc.Fields = append(fc.Fields, customField(ctx))
+			}
+			if l.fileLineLogLevel >= logger.Error {
+				fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			}
+			l.log.Error(msg, fc.Fields...)
 		} else {
-			l.log.Sugar().Errorf(msg, args...)
+			l.log.Error(msg)
 		}
 	}
 }
 
 // Trace print sql message
-func (l *Logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+func (l *Logger) Trace(ctx context.Context, begin time.Time, f func() (string, int64), err error) {
 	if l.LogLevel <= logger.Silent {
 		return
 	}
-	fields := make([]zap.Field, 0, 6+len(l.customFields))
+
 	elapsed := time.Since(begin)
 	switch {
-	case err != nil && l.LogLevel >= logger.Error && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
+	case err != nil &&
+		l.LogLevel >= logger.Error &&
+		l.log.Level().Enabled(zap.ErrorLevel) &&
+		(!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
+		fc := poolGet()
+		defer poolPut(fc)
 		for _, customField := range l.customFields {
-			fields = append(fields, customField(ctx))
+			fc.Fields = append(fc.Fields, customField(ctx))
 		}
-		fields = append(fields,
+		fc.Fields = append(fc.Fields,
 			zap.Error(err),
 			zap.String("file", FileWithLineNum(l.skipPackages...)),
 			zap.Duration("latency", elapsed),
 		)
 
-		sql, rows := fc()
+		sql, rows := f()
 		if rows == -1 {
-			fields = append(fields, zap.String("rows", "-"))
+			fc.Fields = append(fc.Fields, zap.String("rows", "-"))
 		} else {
-			fields = append(fields, zap.Int64("rows", rows))
+			fc.Fields = append(fc.Fields, zap.Int64("rows", rows))
 		}
-		fields = append(fields, zap.String("sql", sql))
-		l.log.Error("trace", fields...)
-	case elapsed > l.SlowThreshold && l.SlowThreshold != 0 && l.LogLevel >= logger.Warn:
+		fc.Fields = append(fc.Fields, zap.String("sql", sql))
+		l.log.Error("trace", fc.Fields...)
+	case elapsed > l.SlowThreshold &&
+		l.SlowThreshold != 0 &&
+		l.LogLevel >= logger.Warn &&
+		l.log.Level().Enabled(zap.WarnLevel):
+		fc := poolGet()
+		defer poolPut(fc)
 		for _, customField := range l.customFields {
-			fields = append(fields, customField(ctx))
+			fc.Fields = append(fc.Fields, customField(ctx))
 		}
-		fields = append(fields, zap.Error(err))
+		fc.Fields = append(fc.Fields, zap.Error(err))
 		if l.fileLineLogLevel >= logger.Warn {
-			fields = append(fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
 		}
-		fields = append(fields,
+		fc.Fields = append(fc.Fields,
 			zap.String("slow!!!", fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)),
 			zap.Duration("latency", elapsed),
 		)
 
-		sql, rows := fc()
+		sql, rows := f()
 		if rows == -1 {
-			fields = append(fields, zap.String("rows", "-"))
+			fc.Fields = append(fc.Fields, zap.String("rows", "-"))
 		} else {
-			fields = append(fields, zap.Int64("rows", rows))
+			fc.Fields = append(fc.Fields, zap.Int64("rows", rows))
 		}
-		fields = append(fields, zap.String("sql", sql))
-		l.log.Warn("trace", fields...)
-	case l.LogLevel == logger.Info:
+		fc.Fields = append(fc.Fields, zap.String("sql", sql))
+		l.log.Warn("trace", fc.Fields...)
+	case l.LogLevel == logger.Info && l.log.Level().Enabled(zap.InfoLevel):
+		fc := poolGet()
+		defer poolPut(fc)
 		for _, customField := range l.customFields {
-			fields = append(fields, customField(ctx))
+			fc.Fields = append(fc.Fields, customField(ctx))
 		}
-		fields = append(fields, zap.Error(err))
+		fc.Fields = append(fc.Fields, zap.Error(err))
 		if l.fileLineLogLevel >= logger.Info {
-			fields = append(fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
 		}
-		fields = append(fields, zap.Duration("latency", elapsed))
-		sql, rows := fc()
+		fc.Fields = append(fc.Fields, zap.Duration("latency", elapsed))
+		sql, rows := f()
 		if rows == -1 {
-			fields = append(fields, zap.String("rows", "-"))
+			fc.Fields = append(fc.Fields, zap.String("rows", "-"))
 		} else {
-			fields = append(fields, zap.Int64("rows", rows))
+			fc.Fields = append(fc.Fields, zap.Int64("rows", rows))
 		}
-		fields = append(fields, zap.String("sql", sql))
-		l.log.Info("trace", fields...)
+		fc.Fields = append(fc.Fields, zap.String("sql", sql))
+		l.log.Info("trace", fc.Fields...)
 	}
 }
 
