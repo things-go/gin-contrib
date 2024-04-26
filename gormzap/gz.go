@@ -15,9 +15,8 @@ import (
 type Logger struct {
 	log *zap.Logger
 	logger.Config
-	customFields     []func(ctx context.Context) zap.Field
-	skipPackages     []string
-	fileLineLogLevel logger.LogLevel
+	customFields []func(ctx context.Context) zap.Field
+	callerCore   *CallerCore
 }
 
 // Option logger/recover option
@@ -40,15 +39,16 @@ func WithConfig(cfg logger.Config) Option {
 // WithSkipPackages optional custom logger.Config
 func WithSkipPackages(skipPackages ...string) Option {
 	return func(l *Logger) {
-		l.skipPackages = skipPackages
+		l.callerCore.AddSkipPackage(skipPackages...)
 	}
 }
 
-// WithFileLineLogLevel optional custom file line log level
-// default: logger.Info
-func WithFileLineLogLevel(lvl logger.LogLevel) Option {
+// WithConfig optional custom logger.Config
+func WithCallerCore(c *CallerCore) Option {
 	return func(l *Logger) {
-		l.fileLineLogLevel = lvl
+		if c != nil {
+			l.callerCore = c
+		}
 	}
 }
 
@@ -67,7 +67,7 @@ func New(zapLogger *zap.Logger, opts ...Option) logger.Interface {
 			IgnoreRecordNotFoundError: false,
 			LogLevel:                  logger.Warn,
 		},
-		fileLineLogLevel: logger.Info,
+		callerCore: NewCallerCore(),
 	}
 	for _, opt := range opts {
 		opt(l)
@@ -86,14 +86,14 @@ func (l *Logger) LogMode(level logger.LogLevel) logger.Interface {
 func (l *Logger) Info(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Info && l.log.Level().Enabled(zap.InfoLevel) {
 		msg = fmt.Sprintf(msg, args...)
-		if len(l.customFields) > 0 || l.fileLineLogLevel >= logger.Info {
+		if neeCaller := l.callerCore.caller != nil && l.callerCore.Enabled(zap.InfoLevel); neeCaller || len(l.customFields) > 0 {
 			fc := poolGet()
 			defer poolPut(fc)
 			for _, customField := range l.customFields {
 				fc.Fields = append(fc.Fields, customField(ctx))
 			}
-			if l.fileLineLogLevel >= logger.Info {
-				fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			if neeCaller {
+				fc.Fields = append(fc.Fields, l.callerCore.caller(l.callerCore.skip, l.callerCore.skipPackages...))
 			}
 			l.log.Debug(msg, fc.Fields...)
 		} else {
@@ -106,14 +106,14 @@ func (l *Logger) Info(ctx context.Context, msg string, args ...any) {
 func (l *Logger) Warn(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Warn && l.log.Level().Enabled(zap.WarnLevel) {
 		msg = fmt.Sprintf(msg, args...)
-		if len(l.customFields) > 0 || l.fileLineLogLevel >= logger.Warn {
+		if neeCaller := l.callerCore.caller != nil && l.callerCore.Enabled(zap.WarnLevel); neeCaller || len(l.customFields) > 0 {
 			fc := poolGet()
 			defer poolPut(fc)
 			for _, customField := range l.customFields {
 				fc.Fields = append(fc.Fields, customField(ctx))
 			}
-			if l.fileLineLogLevel >= logger.Warn {
-				fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			if neeCaller {
+				fc.Fields = append(fc.Fields, l.callerCore.caller(l.callerCore.skip, l.callerCore.skipPackages...))
 			}
 			l.log.Warn(msg, fc.Fields...)
 		} else {
@@ -126,14 +126,14 @@ func (l *Logger) Warn(ctx context.Context, msg string, args ...any) {
 func (l *Logger) Error(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Error && l.log.Level().Enabled(zap.ErrorLevel) {
 		msg = fmt.Sprintf(msg, args...)
-		if len(l.customFields) > 0 || l.fileLineLogLevel >= logger.Error {
+		if neeCaller := l.callerCore.caller != nil && l.callerCore.Enabled(zap.ErrorLevel); neeCaller || len(l.customFields) > 0 {
 			fc := poolGet()
 			defer poolPut(fc)
 			for _, customField := range l.customFields {
 				fc.Fields = append(fc.Fields, customField(ctx))
 			}
-			if l.fileLineLogLevel >= logger.Error {
-				fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+			if neeCaller {
+				fc.Fields = append(fc.Fields, l.callerCore.caller(l.callerCore.skip, l.callerCore.skipPackages...))
 			}
 			l.log.Error(msg, fc.Fields...)
 		} else {
@@ -161,9 +161,11 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, f func() (string, i
 		}
 		fc.Fields = append(fc.Fields,
 			zap.Error(err),
-			zap.String("file", FileWithLineNum(l.skipPackages...)),
 			zap.Duration("latency", elapsed),
 		)
+		if l.callerCore.caller != nil && l.callerCore.Enabled(zap.ErrorLevel) {
+			fc.Fields = append(fc.Fields, l.callerCore.caller(l.callerCore.skip, l.callerCore.skipPackages...))
+		}
 
 		sql, rows := f()
 		if rows == -1 {
@@ -183,8 +185,8 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, f func() (string, i
 			fc.Fields = append(fc.Fields, customField(ctx))
 		}
 		fc.Fields = append(fc.Fields, zap.Error(err))
-		if l.fileLineLogLevel >= logger.Warn {
-			fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+		if l.callerCore.caller != nil && l.callerCore.Enabled(zap.WarnLevel) {
+			fc.Fields = append(fc.Fields, l.callerCore.caller(l.callerCore.skip, l.callerCore.skipPackages...))
 		}
 		fc.Fields = append(fc.Fields,
 			zap.String("slow!!!", fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)),
@@ -206,8 +208,8 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, f func() (string, i
 			fc.Fields = append(fc.Fields, customField(ctx))
 		}
 		fc.Fields = append(fc.Fields, zap.Error(err))
-		if l.fileLineLogLevel >= logger.Info {
-			fc.Fields = append(fc.Fields, zap.String("file", FileWithLineNum(l.skipPackages...)))
+		if l.callerCore.caller != nil && l.callerCore.Enabled(zap.InfoLevel) {
+			fc.Fields = append(fc.Fields, l.callerCore.caller(l.callerCore.skip, l.callerCore.skipPackages...))
 		}
 		fc.Fields = append(fc.Fields, zap.Duration("latency", elapsed))
 		sql, rows := f()
