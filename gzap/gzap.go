@@ -222,16 +222,15 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 			}
 			var level zapcore.Level
 
-			fieldLength := 8 + len(cfg.customFields) + 2
 			if len(c.Errors) > 0 {
 				level = zapcore.ErrorLevel
-				fieldLength += len(c.Errors)
 			} else {
 				level = cfg.useLoggerLevel(c)
 			}
 
-			fields := make([]zap.Field, 0, fieldLength)
-			fields = append(fields,
+			fc := poolGet()
+			defer poolPut(fc)
+			fc.Fields = append(fc.Fields,
 				zap.Int(cfg.field[FieldStatus], c.Writer.Status()),
 				zap.String(cfg.field[FieldMethod], c.Request.Method),
 				zap.String(cfg.field[FieldPath], path),
@@ -250,20 +249,20 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 						respBody = respBodyBuilder.String()
 					}
 				}
-				fields = append(fields,
+				fc.Fields = append(fc.Fields,
 					zap.String(cfg.field[FieldRequestBody], reqBody),
 					zap.String(cfg.field[FieldResponseBody], respBody),
 				)
 			}
 			for _, fieldFunc := range cfg.customFields {
-				fields = append(fields, fieldFunc(c))
+				fc.Fields = append(fc.Fields, fieldFunc(c))
 			}
 			if len(c.Errors) > 0 {
 				for _, e := range c.Errors {
-					fields = append(fields, zap.Error(e))
+					fc.Fields = append(fc.Fields, zap.Error(e))
 				}
 			}
-			logger.Log(level, "logging", fields...)
+			logger.Log(level, "logging", fc.Fields...)
 		}()
 
 		c.Next()
@@ -312,15 +311,16 @@ func Recovery(logger *zap.Logger, stack bool, opts ...Option) gin.HandlerFunc {
 					return
 				}
 
-				fields := make([]zap.Field, 0, 2+len(cfg.customFields))
-				fields = append(fields,
+				fc := poolGet()
+				defer poolPut(fc)
+				fc.Fields = append(fc.Fields,
 					zap.Any("error", err),
 					zap.ByteString("request", httpRequest),
 				)
 				for _, field := range cfg.customFields {
-					fields = append(fields, field(c))
+					fc.Fields = append(fc.Fields, field(c))
 				}
-				logger.Error("recovery from panic", fields...)
+				logger.Error("recovery from panic", fc.Fields...)
 				c.AbortWithStatus(http.StatusInternalServerError)
 			}
 		}()

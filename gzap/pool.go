@@ -1,4 +1,4 @@
-package gormzap
+package gzap
 
 import (
 	"sync"
