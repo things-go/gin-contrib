@@ -3,7 +3,7 @@ module github.com/things-go/gin-contrib
 go 1.21
 
 require (
-	github.com/casbin/casbin/v2 v2.88.0
+	github.com/casbin/casbin/v2 v2.89.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/stretchr/testify v1.9.0
 	github.com/things-go/limiter v0.1.2
