@@ -1,4 +1,4 @@
-package gormzap
+package pool
 
 import (
 	"sync"
@@ -23,30 +23,30 @@ func (c *fieldContainer) reset() *fieldContainer {
 	return c
 }
 
-// poolGet selects an arbitrary item from the field Pool, removes it from the
+// Get selects an arbitrary item from the field Pool, removes it from the
 // field Pool, and returns it to the caller.
-// PoolGet may choose to ignore the field pool and treat it as empty.
-// Callers should not assume any relation between values passed to PoolPut and
-// the values returned by PoolGet.
+// Get may choose to ignore the field pool and treat it as empty.
+// Callers should not assume any relation between values passed to Put and
+// the values returned by Get.
 //
-// NOTE: This function should be call PoolPut to give back.
+// NOTE: This function should be call Put to give back.
 // NOTE: You should know `sync.Pool` work principle
 // ```go
 //
-// fc := logger.PoolGet()
-// defer logger.PoolPut(fc)
+// fc := logger.Get()
+// defer logger.Put(fc)
 // fc.Fields = append(fc.Fields, logger.String("k1", "v1"))
 // ... use fc.Fields
 //
 // ```
-func poolGet() *fieldContainer {
+func Get() *fieldContainer {
 	c := fieldPool.Get().(*fieldContainer)
 	return c.reset()
 }
 
-// poolPut adds x to the pool.
-// NOTE: See PoolGet.
-func poolPut(c *fieldContainer) {
+// Put adds x to the pool.
+// NOTE: See Get.
+func Put(c *fieldContainer) {
 	if c == nil {
 		return
 	}

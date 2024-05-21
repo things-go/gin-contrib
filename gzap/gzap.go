@@ -13,11 +13,14 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/things-go/gin-contrib/internal/pool"
 )
 
 // Option logger/recover option
@@ -42,7 +45,16 @@ func WithSkipLogging(f func(c *gin.Context) bool) Option {
 // WithEnableBody optional custom enable request/response body.
 func WithEnableBody(b bool) Option {
 	return func(c *Config) {
-		c.enableBody = b
+		c.enableBody.Store(b)
+	}
+}
+
+// WithExternalEnableBody optional custom enable request/response body control by external itself.
+func WithExternalEnableBody(b *atomic.Bool) Option {
+	return func(c *Config) {
+		if b != nil {
+			c.enableBody = b
+		}
 	}
 }
 
@@ -121,7 +133,7 @@ type Config struct {
 	// 	zap.WarnLevel: when status >= http.StatusBadRequest && status <= http.StatusUnavailableForLegalReasons
 	//  zap.InfoLevel: otherwise.
 	useLoggerLevel func(c *gin.Context) zapcore.Level
-	enableBody     bool                // enable request/response body
+	enableBody     *atomic.Bool        // enable request/response body
 	limit          int                 // <=0: mean not limit
 	field          [fieldMaxLen]string // log field names
 }
@@ -162,7 +174,7 @@ func newConfig() Config {
 		skipRequestBody:  func(c *gin.Context) bool { return false },
 		skipResponseBody: func(c *gin.Context) bool { return false },
 		useLoggerLevel:   useLoggerLevel,
-		enableBody:       false,
+		enableBody:       &atomic.Bool{},
 		limit:            0,
 		field: [fieldMaxLen]string{
 			"status",
@@ -192,7 +204,7 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 		respBodyBuilder := &strings.Builder{}
 		reqBody := "skip request body"
 
-		if cfg.enableBody {
+		if cfg.enableBody.Load() {
 			c.Writer = &bodyWriter{ResponseWriter: c.Writer, dupBody: respBodyBuilder}
 			if hasSkipRequestBody := skipRequestBody(c) || cfg.skipRequestBody(c); !hasSkipRequestBody {
 				reqBodyBuf, err := io.ReadAll(c.Request.Body)
@@ -228,8 +240,8 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 				level = cfg.useLoggerLevel(c)
 			}
 
-			fc := poolGet()
-			defer poolPut(fc)
+			fc := pool.Get()
+			defer pool.Put(fc)
 			fc.Fields = append(fc.Fields,
 				zap.Int(cfg.field[FieldStatus], c.Writer.Status()),
 				zap.String(cfg.field[FieldMethod], c.Request.Method),
@@ -240,7 +252,7 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 				zap.String(cfg.field[FieldUserAgent], c.Request.UserAgent()),
 				zap.Duration(cfg.field[FieldLatency], time.Since(start)),
 			)
-			if cfg.enableBody {
+			if cfg.enableBody.Load() {
 				respBody := "skip response body"
 				if hasSkipResponseBody := skipResponseBody(c) || cfg.skipResponseBody(c); !hasSkipResponseBody {
 					if cfg.limit > 0 && respBodyBuilder.Len() >= cfg.limit {
@@ -311,8 +323,8 @@ func Recovery(logger *zap.Logger, stack bool, opts ...Option) gin.HandlerFunc {
 					return
 				}
 
-				fc := poolGet()
-				defer poolPut(fc)
+				fc := pool.Get()
+				defer pool.Put(fc)
 				fc.Fields = append(fc.Fields,
 					zap.Any("error", err),
 					zap.ByteString("request", httpRequest),

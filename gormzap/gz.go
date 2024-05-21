@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/things-go/gin-contrib/internal/pool"
 )
 
 // Logger logger for gorm2
@@ -87,8 +89,8 @@ func (l *Logger) Info(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Info && l.log.Level().Enabled(zap.InfoLevel) {
 		msg = fmt.Sprintf(msg, args...)
 		if neeCaller := l.callerCore.caller != nil && l.callerCore.Enabled(zap.InfoLevel); neeCaller || len(l.customFields) > 0 {
-			fc := poolGet()
-			defer poolPut(fc)
+			fc := pool.Get()
+			defer pool.Put(fc)
 			for _, customField := range l.customFields {
 				fc.Fields = append(fc.Fields, customField(ctx))
 			}
@@ -107,8 +109,8 @@ func (l *Logger) Warn(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Warn && l.log.Level().Enabled(zap.WarnLevel) {
 		msg = fmt.Sprintf(msg, args...)
 		if neeCaller := l.callerCore.caller != nil && l.callerCore.Enabled(zap.WarnLevel); neeCaller || len(l.customFields) > 0 {
-			fc := poolGet()
-			defer poolPut(fc)
+			fc := pool.Get()
+			defer pool.Put(fc)
 			for _, customField := range l.customFields {
 				fc.Fields = append(fc.Fields, customField(ctx))
 			}
@@ -127,8 +129,8 @@ func (l *Logger) Error(ctx context.Context, msg string, args ...any) {
 	if l.LogLevel >= logger.Error && l.log.Level().Enabled(zap.ErrorLevel) {
 		msg = fmt.Sprintf(msg, args...)
 		if neeCaller := l.callerCore.caller != nil && l.callerCore.Enabled(zap.ErrorLevel); neeCaller || len(l.customFields) > 0 {
-			fc := poolGet()
-			defer poolPut(fc)
+			fc := pool.Get()
+			defer pool.Put(fc)
 			for _, customField := range l.customFields {
 				fc.Fields = append(fc.Fields, customField(ctx))
 			}
@@ -154,8 +156,8 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, f func() (string, i
 		l.LogLevel >= logger.Error &&
 		l.log.Level().Enabled(zap.ErrorLevel) &&
 		(!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
-		fc := poolGet()
-		defer poolPut(fc)
+		fc := pool.Get()
+		defer pool.Put(fc)
 		for _, customField := range l.customFields {
 			fc.Fields = append(fc.Fields, customField(ctx))
 		}
@@ -179,8 +181,8 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, f func() (string, i
 		l.SlowThreshold != 0 &&
 		l.LogLevel >= logger.Warn &&
 		l.log.Level().Enabled(zap.WarnLevel):
-		fc := poolGet()
-		defer poolPut(fc)
+		fc := pool.Get()
+		defer pool.Put(fc)
 		for _, customField := range l.customFields {
 			fc.Fields = append(fc.Fields, customField(ctx))
 		}
@@ -202,8 +204,8 @@ func (l *Logger) Trace(ctx context.Context, begin time.Time, f func() (string, i
 		fc.Fields = append(fc.Fields, zap.String("sql", sql))
 		l.log.Warn("trace", fc.Fields...)
 	case l.LogLevel == logger.Info && l.log.Level().Enabled(zap.InfoLevel):
-		fc := poolGet()
-		defer poolPut(fc)
+		fc := pool.Get()
+		defer pool.Put(fc)
 		for _, customField := range l.customFields {
 			fc.Fields = append(fc.Fields, customField(ctx))
 		}
