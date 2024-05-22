@@ -68,13 +68,13 @@ func WithSkipAuthentication(fn func(*gin.Context) bool) Option {
 func Authorizer(e casbin.IEnforcer, opts ...Option) gin.HandlerFunc {
 	cfg := Config{
 		func(c *gin.Context, err error) {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"code": http.StatusInternalServerError,
 				"msg":  "Permission validation errors occur!",
 			})
 		},
 		func(c *gin.Context) {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			c.JSON(http.StatusForbidden, gin.H{
 				"code": http.StatusForbidden,
 				"msg":  "Permission denied!",
 			})
@@ -90,10 +90,12 @@ func Authorizer(e casbin.IEnforcer, opts ...Option) gin.HandlerFunc {
 			// checks the subject,path,method permission combination from the request.
 			allowed, err := e.Enforce(cfg.subject(c), c.Request.URL.Path, c.Request.Method)
 			if err != nil {
+				c.Abort()
 				cfg.errFallback(c, err)
 				return
 			}
 			if !allowed {
+				c.Abort()
 				cfg.forbiddenFallback(c)
 				return
 			}

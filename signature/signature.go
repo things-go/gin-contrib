@@ -42,12 +42,12 @@ func (a *Authenticator) Authenticated() gin.HandlerFunc {
 	if a.ErrFallback == nil {
 		a.ErrFallback = func(c *gin.Context, statusCode int, err error) {
 			c.String(statusCode, err.Error())
-			c.Abort()
 		}
 	}
 	return func(c *gin.Context) {
 		parameter, err := a.Parser.ParseFromRequest(c.Request)
 		if err != nil {
+			c.Abort()
 			a.ErrFallback(c, http.StatusBadRequest, err)
 			return
 		}
@@ -62,6 +62,7 @@ func (a *Authenticator) Authenticated() gin.HandlerFunc {
 					statusCode = http.StatusUnauthorized
 				}
 			}
+			c.Abort()
 			a.ErrFallback(c, statusCode, err)
 			return
 		}

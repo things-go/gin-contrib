@@ -1,8 +1,9 @@
 package maxconns
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 
@@ -21,7 +22,7 @@ func MaxConns(n int) gin.HandlerFunc {
 		if latch.TryBorrow() {
 			defer func() {
 				if err := latch.Return(); err != nil {
-					log.Println(err)
+					fmt.Fprintf(os.Stderr, "maxconns: return conns failure, %v\n", err)
 				}
 			}()
 			c.Next()
