@@ -48,19 +48,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${{ steps.vars.outputs.go_cache }}
+            ${{ steps.vars.outputs.GO_CACHE }}
             ~/go/pkg/mod
           key: ${{ runner.os }}-${{ matrix.go-version }}-go-ci-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.go-version }}-go-ci
+            ${{ runner.os }}-${{ matrix.go-version }}-go-ci-
 
       - name: Unit test
         run: |
           go test -v -race -coverprofile=coverage -covermode=atomic ./...
 
       - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
         with:
           files: ./coverage
           flags: unittests
+          token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
