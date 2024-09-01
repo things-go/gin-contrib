@@ -3,7 +3,7 @@ module github.com/things-go/gin-contrib
 go 1.21
 
 require (
-	github.com/casbin/casbin/v2 v2.98.0
+	github.com/casbin/casbin/v2 v2.99.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/stretchr/testify v1.9.0
 	github.com/things-go/limiter v0.1.5
@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/casbin/govaluate v1.2.0 // indirect
