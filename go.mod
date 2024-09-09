@@ -9,7 +9,7 @@ require (
 	github.com/things-go/limiter v0.1.5
 	github.com/thinkgos/http-signature-go v0.2.2
 	go.uber.org/zap v1.27.0
-	gorm.io/gorm v1.25.11
+	gorm.io/gorm v1.25.12
 )
 
 require (
