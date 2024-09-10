@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/stretchr/testify v1.9.0
 	github.com/things-go/limiter v0.1.5
-	github.com/thinkgos/http-signature-go v0.2.2
+	github.com/thinkgos/http-signature-go v0.3.0
 	go.uber.org/zap v1.27.0
 	gorm.io/gorm v1.25.12
 )
