@@ -1,6 +1,6 @@
 module github.com/things-go/gin-contrib
 
-go 1.21
+go 1.22
 
 require (
 	github.com/casbin/casbin/v2 v2.99.0
