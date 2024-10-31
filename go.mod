@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/casbin/casbin/v2 v2.100.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/stretchr/testify v1.9.0
 	github.com/things-go/limiter v0.1.5
 	github.com/thinkgos/http-signature-go v0.3.0
