@@ -55,9 +55,13 @@ func TraceId(opts ...Option) gin.HandlerFunc {
 		// set response header
 		c.Header(cc.traceIdHeader, traceId)
 		// set request context
-		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), ctxTraceIdKey{}, traceId))
+		c.Request = c.Request.WithContext(WithTraceId(c.Request.Context(), traceId))
 		c.Next()
 	}
+}
+
+func WithTraceId(ctx context.Context, traceId string) context.Context {
+	return context.WithValue(ctx, ctxTraceIdKey{}, traceId)
 }
 
 // FromTraceId returns a trace id from the given context if one is present.
@@ -65,6 +69,10 @@ func TraceId(opts ...Option) gin.HandlerFunc {
 func FromTraceId(ctx context.Context) string {
 	traceId, _ := ctx.Value(ctxTraceIdKey{}).(string)
 	return traceId
+}
+
+func InjectNewFromTraceId(ctx, newCtx context.Context) context.Context {
+	return WithTraceId(newCtx, FromTraceId(ctx))
 }
 
 // GetTraceId get trace id from gin.Context.
