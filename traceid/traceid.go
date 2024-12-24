@@ -2,9 +2,13 @@ package traceid
 
 import (
 	"context"
+	"crypto/rand"
+	"io"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/things-go/gin-contrib/utilities/sequence"
+	"github.com/oklog/ulid/v2"
 )
 
 // Key to use when setting the trace id.
@@ -13,7 +17,7 @@ type ctxTraceIdKey struct{}
 // Config defines the config for TraceId middleware
 type Config struct {
 	traceIdHeader string
-	nextTraceID   func() string
+	nextTraceId   func() string
 }
 
 // Option TraceId option
@@ -29,7 +33,7 @@ func WithTraceIdHeader(s string) Option {
 // WithNextTraceId optional next trace id function (default NewSequence function use utilities/sequence)
 func WithNextTraceId(f func() string) Option {
 	return func(c *Config) {
-		c.nextTraceID = f
+		c.nextTraceId = f
 	}
 }
 
@@ -41,7 +45,7 @@ func WithNextTraceId(f func() string) Option {
 func TraceId(opts ...Option) gin.HandlerFunc {
 	cc := &Config{
 		traceIdHeader: "X-Trace-Id",
-		nextTraceID:   sequence.New().NewSequence,
+		nextTraceId:   NextTraceId,
 	}
 	for _, opt := range opts {
 		opt(cc)
@@ -50,7 +54,7 @@ func TraceId(opts ...Option) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		traceId := c.Request.Header.Get(cc.traceIdHeader)
 		if traceId == "" {
-			traceId = cc.nextTraceID()
+			traceId = cc.nextTraceId()
 		}
 		// set response header
 		c.Header(cc.traceIdHeader, traceId)
@@ -78,4 +82,19 @@ func InjectNewFromTraceId(ctx, newCtx context.Context) context.Context {
 // GetTraceId get trace id from gin.Context.
 func GetTraceId(c *gin.Context) string {
 	return FromTraceId(c.Request.Context())
+}
+
+var (
+	entropy     io.Reader
+	entropyOnce sync.Once
+)
+
+// NextTraceId next returns the trace id, which use ulid.
+func NextTraceId() string {
+	entropyOnce.Do(func() {
+		entropy = &ulid.LockedMonotonicReader{
+			MonotonicReader: ulid.Monotonic(rand.Reader, 0),
+		}
+	})
+	return ulid.MustNew(uint64(time.Now().UTC().UnixMilli()), entropy).String()
 }
