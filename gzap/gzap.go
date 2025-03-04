@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thinkgos/httpcurl"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -103,6 +104,16 @@ func WithFieldName(index int, name string) Option {
 	}
 }
 
+func WithEnableDebugCurl(b bool) Option {
+	return func(c *Config) {
+		if b {
+			c.debugCurl = httpcurl.New()
+		} else {
+			c.debugCurl = nil
+		}
+	}
+}
+
 // Indices for renaming field.
 const (
 	FieldStatus = iota
@@ -136,6 +147,7 @@ type Config struct {
 	enableBody     *atomic.Bool        // enable request/response body
 	limit          int                 // <=0: mean not limit
 	field          [fieldMaxLen]string // log field names
+	debugCurl      *httpcurl.HttpCurl  // debug curl
 }
 
 func skipRequestBody(c *gin.Context) bool {
@@ -203,10 +215,12 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		respBodyBuilder := &strings.Builder{}
 		reqBody := "skip request body"
+		debugCurl := ""
+		hasSkipRequestBody := skipRequestBody(c) || cfg.skipRequestBody(c)
 
 		if cfg.enableBody.Load() {
 			c.Writer = &bodyWriter{ResponseWriter: c.Writer, dupBody: respBodyBuilder}
-			if hasSkipRequestBody := skipRequestBody(c) || cfg.skipRequestBody(c); !hasSkipRequestBody {
+			if !hasSkipRequestBody {
 				reqBodyBuf, err := io.ReadAll(c.Request.Body)
 				if err != nil {
 					c.String(http.StatusInternalServerError, err.Error())
@@ -221,6 +235,9 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 					reqBody = string(reqBodyBuf)
 				}
 			}
+		}
+		if !hasSkipRequestBody && cfg.debugCurl != nil {
+			debugCurl, _ = cfg.debugCurl.IntoCurl(c.Request)
 		}
 
 		start := time.Now()
@@ -268,6 +285,9 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 			}
 			for _, fieldFunc := range cfg.customFields {
 				fc.Fields = append(fc.Fields, fieldFunc(c))
+			}
+			if debugCurl != "" {
+				fc.Fields = append(fc.Fields, zap.String("curl", debugCurl))
 			}
 			if len(c.Errors) > 0 {
 				for _, e := range c.Errors {

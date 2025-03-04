@@ -91,6 +91,8 @@ github.com/things-go/limiter v0.1.5 h1:vCVzm0897TSWFhy2G52rU27hdhJl/lgvfiRQrek53
 github.com/things-go/limiter v0.1.5/go.mod h1:C7SPsXIfiPPC44k/mb0TCwZa5DzqxXcL7Zg6g5hPL5I=
 github.com/thinkgos/http-signature-go v0.3.0 h1:0lv04ZbAQfQ7zirAHGr5gW2544+EGp2z3BwJGR2vFl8=
 github.com/thinkgos/http-signature-go v0.3.0/go.mod h1:9S0ZwDja8I/GN8vLX08js+YDotBjQ3nC5KTdlluEz3U=
+github.com/thinkgos/httpcurl v0.1.1 h1:QhafMtst5PeLO1BigVzWv1IbbaHJsrrW9zD/zEIZfL8=
+github.com/thinkgos/httpcurl v0.1.1/go.mod h1:6/oHRxFowU4lpWVkG0gTZhxsILTUosgzHTAUsUvhANM=
 github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65EE=
