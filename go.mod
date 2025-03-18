@@ -3,13 +3,14 @@ module github.com/things-go/gin-contrib
 go 1.22
 
 require (
-	github.com/casbin/casbin/v2 v2.103.0
+	github.com/casbin/casbin/v2 v2.104.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/stretchr/testify v1.10.0
 	github.com/things-go/limiter v0.1.5
 	github.com/thinkgos/http-signature-go v0.3.0
+	github.com/thinkgos/httpcurl v0.1.1
 	go.uber.org/zap v1.27.0
 	gorm.io/gorm v1.25.12
 )
@@ -39,7 +40,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/thinkgos/httpcurl v0.1.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
