@@ -241,12 +241,13 @@ func TestCacheWithRequestURI(t *testing.T) {
 	store := newStore(time.Second * 60)
 
 	r := gin.New()
-	r.GET("/cache_with_uri", Cache(store, time.Second*3), func(c *gin.Context) {
+	r.GET("/cache_with_uri", Cache(store, time.Second*5), func(c *gin.Context) {
 		c.String(http.StatusOK, "pong "+fmt.Sprint(time.Now().UnixNano()))
 	})
 
 	w1 := performRequest("/cache_with_uri?foo=1", r)
 	w2 := performRequest("/cache_with_uri?foo=1", r)
+	time.Sleep(time.Millisecond * 10)
 	w3 := performRequest("/cache_with_uri?foo=2", r)
 
 	assert.Equal(t, http.StatusOK, w1.Code)
