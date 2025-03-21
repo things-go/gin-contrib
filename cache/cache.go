@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"net/url"
 	"time"
@@ -17,7 +18,7 @@ var PageCachePrefix = "gincache.page.cache:"
 
 // Logger logger interface
 type Logger interface {
-	Errorf(format string, args ...any)
+	Errorf(ctx context.Context, format string, args ...any)
 }
 
 // Encoding interface
@@ -134,7 +135,7 @@ func Cache(store persist.Store, expire time.Duration, opts ...Option) gin.Handle
 				bc := getBodyCacheFromBodyWriter(bodyWriter, cfg.encode)
 				if !c.IsAborted() && bodyWriter.Status() < 300 && bodyWriter.Status() >= 200 {
 					if err = cfg.store.Set(key, bc, cfg.expire+cfg.rand()); err != nil {
-						cfg.logger.Errorf("set cache key error: %s, cache key: %s", err, key)
+						cfg.logger.Errorf(c.Request.Context(), "set cache key error: %s, cache key: %s", err, key)
 					}
 				}
 				return bc, nil

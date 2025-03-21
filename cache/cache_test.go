@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -322,12 +323,7 @@ func TestBodyWrite(t *testing.T) {
 
 func TestDiscard(_ *testing.T) {
 	l := NewDiscard()
-	l.Debugf("")
-	l.Infof("")
-	l.Errorf("")
-	l.Warnf("")
-	l.DPanicf("")
-	l.Fatalf("")
+	l.Errorf(context.Background(), "")
 }
 
 func TestJSONEncoding(t *testing.T) {
