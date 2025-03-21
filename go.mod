@@ -3,7 +3,7 @@ module github.com/things-go/gin-contrib
 go 1.22
 
 require (
-	github.com/alicebob/miniredis/v2 v2.33.0
+	github.com/alicebob/miniredis/v2 v2.34.0
 	github.com/casbin/casbin/v2 v2.104.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
