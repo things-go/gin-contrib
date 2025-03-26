@@ -15,5 +15,5 @@ func main() {
 		fmt.Println(traceid.FromTraceId(c.Request.Context()))
 		fmt.Println(traceid.GetTraceId(c))
 	})
-	router.Run(":8080")
+	router.Run(":8080")// nolint: errcheck
 }

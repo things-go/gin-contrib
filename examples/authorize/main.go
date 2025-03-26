@@ -75,5 +75,5 @@ func main() {
 		c.String(http.StatusOK, "success auth")
 	})
 
-	router.Run(":8080")
+	router.Run(":8080") // nolint: errcheck
 }

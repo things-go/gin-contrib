@@ -32,5 +32,5 @@ func main() {
 	router.GET("/dataset2/resource1", func(c *gin.Context) {
 		c.String(http.StatusOK, "alice do not own this resource")
 	})
-	router.Run(":8080")
+	router.Run(":8080") // nolint: errcheck
 }

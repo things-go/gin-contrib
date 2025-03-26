@@ -26,10 +26,10 @@ func (JSONGzipEncoding) Marshal(v any) ([]byte, error) {
 	}
 	err = json.NewEncoder(writer).Encode(v)
 	if err != nil {
-		writer.Close()
+		writer.Close() // nolint: errcheck
 		return nil, err
 	}
-	writer.Close()
+	writer.Close() // nolint: errcheck
 	return buf.Bytes(), nil
 }
 
@@ -38,8 +38,6 @@ func (JSONGzipEncoding) Unmarshal(data []byte, v any) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		reader.Close()
-	}()
+	defer reader.Close() // nolint: errcheck
 	return json.NewDecoder(reader).Decode(v)
 }

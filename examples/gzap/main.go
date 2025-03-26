@@ -53,8 +53,8 @@ func main() {
 	})
 
 	r.GET("/error", func(c *gin.Context) {
-		c.Error(errors.New("An error happen 1")) // nolint: errcheck
-		c.Error(errors.New("An error happen 2")) // nolint: errcheck
+		c.Error(errors.New("An error happen 1")) // nolint: errcheck,staticcheck
+		c.Error(errors.New("An error happen 2")) // nolint: errcheck,staticcheck
 	})
 
 	r.GET("/skiplogging", func(c *gin.Context) {
@@ -62,5 +62,5 @@ func main() {
 	})
 
 	// Listen and Server in 0.0.0.0:8080
-	r.Run(":8080")
+	r.Run(":8080") // nolint: errcheck
 }

@@ -153,7 +153,7 @@ type Config struct {
 func skipRequestBody(c *gin.Context) bool {
 	v := c.Request.Header.Get("Content-Type")
 	d, params, err := mime.ParseMediaType(v)
-	if err != nil || !(d == "multipart/form-data" || d == "multipart/mixed") {
+	if err != nil || (d != "multipart/form-data" && d != "multipart/mixed") {
 		return false
 	}
 	_, ok := params["boundary"]
@@ -227,7 +227,7 @@ func Logger(logger *zap.Logger, opts ...Option) gin.HandlerFunc {
 					c.Abort()
 					return
 				}
-				c.Request.Body.Close()
+				c.Request.Body.Close() // nolint: errcheck
 				c.Request.Body = io.NopCloser(bytes.NewBuffer(reqBodyBuf))
 				if cfg.limit > 0 && len(reqBodyBuf) >= cfg.limit {
 					reqBody = "larger request body"

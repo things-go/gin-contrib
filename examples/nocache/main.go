@@ -9,5 +9,5 @@ import (
 func main() {
 	router := gin.Default()
 	router.Use(nocache.NoCache())
-	router.Run(":8080")
+	router.Run(":8080") // nolint: errcheck
 }

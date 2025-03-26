@@ -27,12 +27,12 @@ func main() {
 		),
 	)
 
-	parser.AddMetadata(readKeyID, httpsign.Metadata{
+	parser.AddMetadata(readKeyID, httpsign.Metadata{ // nolint: errcheck
 		Scheme: 0,
 		Alg:    httpsign.SigningMethodHmacSha256.Alg(),
 		Key:    []byte("HMACSHA256-SecretKey"),
 	})
-	parser.AddMetadata(writeKeyID, httpsign.Metadata{
+	parser.AddMetadata(writeKeyID, httpsign.Metadata{ // // nolint: errcheck
 		Scheme: 0,
 		Alg:    httpsign.SigningMethodHmacSha512.Alg(),
 		Key:    []byte("HMACSHA512-SecretKey"),
@@ -53,5 +53,5 @@ func main() {
 		c.String(http.StatusOK, "ok")
 	})
 
-	r.Run(":8080")
+	r.Run(":8080") // nolint: errcheck
 }
