@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/things-go/limiter/limit"
+	"github.com/thinkgos/limiter/limit"
 )
 
 // MaxConns returns a middleware that limit the concurrent connections.
