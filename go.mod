@@ -11,7 +11,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/stretchr/testify v1.10.0
-	github.com/thinkgos/http-signature-go v0.3.0
+	github.com/thinkgos/http-signature-go v0.3.1
 	github.com/thinkgos/httpcurl v0.1.1
 	github.com/thinkgos/limiter v0.2.0
 	go.uber.org/zap v1.27.0
